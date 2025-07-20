@@ -77,8 +77,7 @@ export function SchemaBuilder({ onSchemaChange }: SchemaBuilderProps) {
                 {fields.map((field, index) => (
                   <FieldEditor
                     key={field.id}
-                    fieldPath={`fields.${index}`}
-                    onRemove={() => remove(index)}
+                    name={`fields.${index}`}
                   />
                 ))}
               </div>
