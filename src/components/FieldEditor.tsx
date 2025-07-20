@@ -1,149 +1,84 @@
-import React from 'react';
-import { useFormContext, useFieldArray } from 'react-hook-form';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trash2, Plus, ChevronDown, ChevronRight } from 'lucide-react';
-import { SchemaField } from '@/types/schema';
-import { generateUniqueId } from '@/utils/schemaGenerator';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { TrashIcon } from "lucide-react";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "./ui/collapsible";
+import { Label } from "./ui/label";
+import { useFieldArray, useFormContext } from "react-hook-form";
+import { generateUniqueId } from "@/lib/utils";
 
-interface FieldEditorProps {
-  fieldPath: string;
-  level?: number;
-  onRemove?: () => void;
+interface Field {
+  id: string;
+  name: string;
+  type: string;
+  children?: Field[];
 }
 
-export function FieldEditor({ fieldPath, level = 0, onRemove }: FieldEditorProps) {
-  const { control, register, watch, setValue } = useFormContext();
+interface FieldEditorProps {
+  nestIndex?: number;
+  name: string;
+}
+
+export const FieldEditor: React.FC<FieldEditorProps> = ({
+  nestIndex = 0,
+  name,
+}) => {
+  const { control, register } = useFormContext();
   const { fields, append, remove } = useFieldArray({
     control,
-    name: `${fieldPath}.children`,
+    name,
   });
 
-  const fieldType = watch(`${fieldPath}.type`);
-  const fieldKey = watch(`${fieldPath}.key`);
-  const [isExpanded, setIsExpanded] = React.useState(true);
-
-  const addNestedField = () => {
-    const newField: SchemaField = {
+  const handleAddField = () => {
+    const newField: Field = {
       id: generateUniqueId(),
-      key: '',
-      type: 'string',
-      children: []
+      name: "",
+      type: "string",
     };
     append(newField);
   };
 
-  const handleTypeChange = (newType: string) => {
-    setValue(`${fieldPath}.type`, newType);
-    if (newType === 'nested' && !fields.length) {
-      addNestedField();
-    }
-  };
-
-  const indentClass = level > 0 ? `ml-${Math.min(level * 4, 16)}` : '';
-
   return (
-    <Card className={`transition-all duration-200 hover:shadow-md ${indentClass}`}>
-      <CardHeader className="pb-3">
-        <div className="flex items-center gap-3">
-          {fieldType === 'nested' && (
-            <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
-              <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                  {isExpanded ? (
-                    <ChevronDown className="h-4 w-4" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4" />
-                  )}
-                </Button>
-              </CollapsibleTrigger>
-            </Collapsible>
-          )}
-          
-          <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3">
-            <Input
-              {...register(`${fieldPath}.key`)}
-              placeholder="Field key"
-              className="font-medium"
-            />
-            
-            <Select value={fieldType} onValueChange={handleTypeChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="string">String</SelectItem>
-                <SelectItem value="number">Number</SelectItem>
-                <SelectItem value="nested">Nested Object</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <div className="flex gap-2">
-              {fieldType === 'nested' && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addNestedField}
-                  className="flex items-center gap-1"
-                >
-                  <Plus className="h-4 w-4" />
-                  Add Field
-                </Button>
-              )}
-              
-              {onRemove && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={onRemove}
-                  className="text-destructive hover:text-destructive"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              )}
+    <div className="space-y-4 ml-4">
+      {fields.map((field, index) => {
+        const currentName = `${name}.${index}`;
+        return (
+          <Collapsible key={field.id} defaultOpen>
+            <div className="flex items-center space-x-2">
+              <Label>Name:</Label>
+              <Input {...register(`${currentName}.name`)} />
+              <Label>Type:</Label>
+              <select {...register(`${currentName}.type`)}>
+                <option value="string">String</option>
+                <option value="number">Number</option>
+                <option value="nested">Nested</option>
+              </select>
+              <Button
+                variant="ghost"
+                onClick={() => remove(index)}
+                type="button"
+              >
+                <TrashIcon className="w-4 h-4 text-red-500" />
+              </Button>
             </div>
-          </div>
-        </div>
-      </CardHeader>
 
-      {fieldType === 'nested' && (
-        <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
-          <CollapsibleContent>
-            <CardContent className="pt-0">
-              <div className="space-y-3">
-                {fields.map((field, index) => (
-                  <FieldEditor
-                    key={field.id}
-                    fieldPath={`${fieldPath}.children.${index}`}
-                    level={level + 1}
-                    onRemove={() => remove(index)}
-                  />
-                ))}
-                
-                {fields.length === 0 && (
-                  <div className="text-center py-6 text-muted-foreground">
-                    <p className="text-sm">No nested fields yet</p>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={addNestedField}
-                      className="mt-2"
-                    >
-                      Add first field
-                    </Button>
-                  </div>
+            <CollapsibleContent>
+              <div className="pl-6">
+                {field.type === "nested" && (
+                  <FieldEditor name={`${currentName}.children`} nestIndex={nestIndex + 1} />
                 )}
               </div>
-            </CardContent>
-          </CollapsibleContent>
-        </Collapsible>
-      )}
-    </Card>
+            </CollapsibleContent>
+          </Collapsible>
+        );
+      })}
+
+      <Button type="button" onClick={handleAddField} className="mt-2">
+        Add Field
+      </Button>
+    </div>
   );
-}
+};
