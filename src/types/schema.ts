@@ -1,15 +1,6 @@
-export interface SchemaField {
+export interface Field {
   id: string;
-  key: string;
-  type: 'string' | 'number' | 'nested';
-  children?: SchemaField[];
-}
-
-export interface FormData {
-  fields: SchemaField[];
-}
-
-export interface JSONSchema {
-  type: 'object';
-  properties: Record<string, any>;
+  name: string;
+  type: string;
+  children?: Field[];
 }
