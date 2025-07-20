@@ -1,83 +1,76 @@
-import { TrashIcon } from "lucide-react";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import {
-  Collapsible,
-  CollapsibleContent,
-} from "./ui/collapsible";
-import { Label } from "./ui/label";
-import { useFieldArray, useFormContext } from "react-hook-form";
-import { generateUniqueId } from "@/lib/utils";
-
-interface Field {
-  id: string;
-  name: string;
-  type: string;
-  children?: Field[];
-}
+import React from 'react';
+import { useFormContext, useFieldArray, useController } from 'react-hook-form';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Trash2 } from 'lucide-react';
+import { Field } from '@/types/schema';
+import { generateUniqueId } from '@/utils/schemaGenerator';
 
 interface FieldEditorProps {
-  nestIndex?: number;
-  name: string;
+  fieldPath: string;
+  onRemove: () => void;
 }
 
-export const FieldEditor: React.FC<FieldEditorProps> = ({
-  nestIndex = 0,
-  name,
-}) => {
+export const FieldEditor: React.FC<FieldEditorProps> = ({ fieldPath, onRemove }) => {
   const { control, register } = useFormContext();
-  const { fields, append, remove } = useFieldArray<Field>({
+
+  const { append, remove, fields } = useFieldArray({
     control,
-    name,
+    name: `${fieldPath}.children` as const
   });
 
-  const handleAddField = () => {
+  const {
+    field: typeField
+  } = useController({
+    name: `${fieldPath}.type` as const,
+    control
+  });
+
+  const addChildField = () => {
     const newField: Field = {
       id: generateUniqueId(),
-      name: "",
-      type: "string",
+      name: '',
+      type: 'string',
+      children: []
     };
     append(newField);
   };
 
   return (
-    <div className="space-y-4 ml-4">
-      {fields.map((field, index) => {
-        const currentName = `${name}.${index}`;
-        return (
-          <Collapsible key={field.id} defaultOpen>
-            <div className="flex items-center space-x-2">
-              <Label>Name:</Label>
-              <Input {...register(`${currentName}.name`)} />
-              <Label>Type:</Label>
-              <select {...register(`${currentName}.type`)}>
-                <option value="string">String</option>
-                <option value="number">Number</option>
-                <option value="nested">Nested</option>
-              </select>
-              <Button
-                variant="ghost"
-                onClick={() => remove(index)}
-                type="button"
-              >
-                <TrashIcon className="w-4 h-4 text-red-500" />
-              </Button>
-            </div>
+    <div className="border p-4 rounded-md space-y-4">
+      <div className="flex items-center gap-4">
+        <Input
+          placeholder="Field Name"
+          {...register(`${fieldPath}.name` as const)}
+        />
+        <Input
+          placeholder="Field Type"
+          {...register(`${fieldPath}.type` as const)}
+        />
+        <Button type="button" variant="destructive" onClick={onRemove}>
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
 
-            <CollapsibleContent>
-              <div className="pl-6">
-                {field.type === "nested" && (
-                  <FieldEditor name={`${currentName}.children`} nestIndex={nestIndex + 1} />
-                )}
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
-        );
-      })}
-
-      <Button type="button" onClick={handleAddField} className="mt-2">
-        Add Field
-      </Button>
+      {typeField.value === 'object' && (
+        <div className="ml-6 mt-4 space-y-2">
+          <div className="flex justify-between items-center">
+            <span className="font-medium">Nested Fields</span>
+            <Button type="button" variant="outline" onClick={addChildField}>
+              Add Nested Field
+            </Button>
+          </div>
+          <div className="space-y-2">
+            {fields.map((child, index) => (
+              <FieldEditor
+                key={child.id}
+                fieldPath={`${fieldPath}.children.${index}`}
+                onRemove={() => remove(index)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
