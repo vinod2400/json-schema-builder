@@ -3,12 +3,16 @@ import { useForm, FormProvider, useFieldArray } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus } from 'lucide-react';
-import { FormData, SchemaField } from '@/types/schema';
+import { Field } from '@/types/schema';
 import { FieldEditor } from './FieldEditor';
 import { generateUniqueId } from '@/utils/schemaGenerator';
 
 interface SchemaBuilderProps {
-  onSchemaChange: (fields: SchemaField[]) => void;
+  onSchemaChange: (fields: Field[]) => void;
+}
+
+interface FormData {
+  fields: Field[];
 }
 
 export function SchemaBuilder({ onSchemaChange }: SchemaBuilderProps) {
@@ -31,9 +35,9 @@ export function SchemaBuilder({ onSchemaChange }: SchemaBuilderProps) {
   }, [watchedFields, onSchemaChange]);
 
   const addField = () => {
-    const newField: SchemaField = {
+    const newField: Field = {
       id: generateUniqueId(),
-      key: '',
+      name: '',
       type: 'string',
       children: []
     };
@@ -77,7 +81,8 @@ export function SchemaBuilder({ onSchemaChange }: SchemaBuilderProps) {
                 {fields.map((field, index) => (
                   <FieldEditor
                     key={field.id}
-                    name={`fields.${index}`}
+                    fieldPath={`fields.${index}`}
+                    onRemove={() => remove(index)}
                   />
                 ))}
               </div>
