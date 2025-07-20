@@ -26,7 +26,7 @@ export const FieldEditor: React.FC<FieldEditorProps> = ({
   name,
 }) => {
   const { control, register } = useFormContext();
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove } = useFieldArray<Field>({
     control,
     name,
   });
