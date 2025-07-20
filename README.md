@@ -25,7 +25,7 @@ A handy visual tool to **create, edit, and manage JSON schemas** without writing
 ## 📦 Installation
 
 ```bash
-git clone 
+git clone https://github.com/vinod2400/json-schema-builder.git
 cd json-schema-builder
 npm install
 npm run dev
