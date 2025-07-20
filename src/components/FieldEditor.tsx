@@ -4,7 +4,6 @@ import { Input } from "./ui/input";
 import {
   Collapsible,
   CollapsibleContent,
-  CollapsibleTrigger,
 } from "./ui/collapsible";
 import { Label } from "./ui/label";
 import { useFieldArray, useFormContext } from "react-hook-form";
